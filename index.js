@@ -77,16 +77,27 @@ app.get('/videos', async (req, res) => {
     const command = new ListObjectsV2Command({
       Bucket: process.env.S3_BUCKET_NAME
     });
-    
+
     const response = await s3Client.send(command);
-    
-    const videos = response.Contents ? response.Contents.map(file => ({
-      name: file.Key,
-      url: `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${file.Key}`,
-      lastModified: file.LastModified,
-      size: file.Size
-    })) : [];
-    
+
+    const videos = await Promise.all(
+      (response.Contents || []).map(async (file) => {
+        const getObjectCommand = new GetObjectCommand({
+          Bucket: process.env.S3_BUCKET_NAME,
+          Key: file.Key
+        });
+
+        const signedUrl = await getSignedUrl(s3Client, getObjectCommand, { expiresIn: 3600 }); // 1-hour expiry
+
+        return {
+          name: file.Key,
+          url: signedUrl,
+          lastModified: file.LastModified,
+          size: file.Size
+        };
+      })
+    );
+
     res.json(videos);
   } catch (err) {
     console.error('Error listing videos:', err);
