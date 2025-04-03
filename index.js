@@ -48,7 +48,10 @@ app.post('/upload', upload.single('video'), async (req, res) => {
       return res.status(400).json({ error: 'No file uploaded' });
     }
 
-    const fileKey = `videos/${Date.now()}-${req.file.originalname}`; // Store inside 'videos/' folder
+    const fileExtension = req.file.originalname.split('.').pop();
+    const fileId = `${Date.now()}-${uuidv4()}.${fileExtension}`;
+    const fileKey = `video/${fileId}`;
+    console.log("Uploading to S3 with key:", fileKey);
 
     const params = {
       Bucket: process.env.S3_BUCKET_NAME,
@@ -82,7 +85,7 @@ app.get('/videos', async (req, res) => {
   try {
     const command = new ListObjectsV2Command({
       Bucket: process.env.S3_BUCKET_NAME,
-      Prefix: "videos/" // Only fetch objects inside the "videos/" folder
+      Prefix: "video/" // Only fetch objects inside the "videos/" folder
     });
 
     const response = await s3Client.send(command);
@@ -97,7 +100,7 @@ app.get('/videos', async (req, res) => {
         const signedUrl = await getSignedUrl(s3Client, getObjectCommand, { expiresIn: 3600 }); // 1-hour expiry
 
         return {
-          name: file.Key.replace("videos/", ""), // Remove folder prefix for cleaner names
+          name: file.Key.replace("video/", ""), // Remove folder prefix for cleaner names
           url: signedUrl,
           lastModified: file.LastModified,
           size: file.Size
