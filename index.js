@@ -21,7 +21,8 @@ const corsOptions = {
 }
 
 app.use(cors(corsOptions));
-app.use(express.json());
+app.use(express.json({ limit: '500mb' }));
+app.use(express.urlencoded({ limit: '500mb', extended: true }));
 
 // Configure AWS S3 client
 const s3Client = new S3Client({
@@ -35,8 +36,12 @@ const s3Client = new S3Client({
 // Configure multer memory storage
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 500 * 1024 * 1024 } // 500MB
+  limits: {
+    fileSize: 500 * 1024 * 1024, // 500MB
+    fieldSize: 500 * 1024 * 1024  // 500MB
+  }
 });
+
 
 //Server Check
 app.get('/', async(req,res)=>{
@@ -51,6 +56,11 @@ const videoCorsOptions = {
   allowedHeaders: ['Content-Type', 'Authorization'],
   maxAge: 86400 // Cache preflight for 24 hours
 };
+app.options('/upload', cors(corsOptions), (req, res) => {
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  res.status(200).end();
+});
 // Upload endpoint
 app.post('/upload', cors(videoCorsOptions), upload.single('video'), async (req, res) => {
   try {
