@@ -14,7 +14,9 @@ const cors = require('cors');
 const { v4: uuidv4 } = require('uuid');
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: ['http://localhost:3000', 'https://li-frontend.vercel.app']
+}));
 app.use(express.json());
 
 // Configure AWS S3 client
@@ -38,6 +40,7 @@ app.get('/', async(req,res)=>{
     message: "Server is Fine"
   })
 })
+
 // Upload endpoint
 app.post('/upload', upload.single('video'), async (req, res) => {
   try {
@@ -45,9 +48,11 @@ app.post('/upload', upload.single('video'), async (req, res) => {
       return res.status(400).json({ error: 'No file uploaded' });
     }
 
+    const fileKey = `videos/${Date.now()}-${req.file.originalname}`; // Store inside 'videos/' folder
+
     const params = {
       Bucket: process.env.S3_BUCKET_NAME,
-      Key: Date.now().toString() + '-' + req.file.originalname,
+      Key: fileKey,
       Body: req.file.buffer,
       ContentType: req.file.mimetype
     };
@@ -55,12 +60,12 @@ app.post('/upload', upload.single('video'), async (req, res) => {
     const command = new PutObjectCommand(params);
     await s3Client.send(command);
     
-    const fileUrl = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${params.Key}`;
+    const fileUrl = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${fileKey}`;
     
     res.json({
       message: 'Upload successful',
       location: fileUrl,
-      key: params.Key
+      key: fileKey
     });
   } catch (err) {
     console.error('Upload error:', err);
@@ -70,6 +75,7 @@ app.post('/upload', upload.single('video'), async (req, res) => {
     });
   }
 });
+
 
 // List videos endpoint
 app.get('/videos', async (req, res) => {
