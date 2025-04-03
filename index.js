@@ -32,6 +32,12 @@ const upload = multer({
   limits: { fileSize: 500 * 1024 * 1024 } // 500MB
 });
 
+//Server Check
+app.get('/', async(req,res)=>{
+  res.json({
+    message: "Server is Fine"
+  })
+})
 // Upload endpoint
 app.post('/upload', upload.single('video'), async (req, res) => {
   try {
