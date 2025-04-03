@@ -45,8 +45,14 @@ app.get('/', async(req,res)=>{
   })
 })
 
+const videoCorsOptions = {
+  origin: ['https://li-frontend.vercel.app', 'http://localhost:3000'],
+  methods: ['POST', 'OPTIONS'], // Explicitly allow these methods
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  maxAge: 86400 // Cache preflight for 24 hours
+};
 // Upload endpoint
-app.post('/upload', upload.single('video'), async (req, res) => {
+app.post('/upload', cors(videoCorsOptions), upload.single('video'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'No file uploaded' });
