@@ -1,0 +1,33 @@
+services:
+  - type: web
+    name: my-node-app
+    runtime: node
+    buildCommand: "npm install"
+    startCommand: "node index.js"
+    env:
+      - key: NODE_ENV
+        value: production
+    disk:
+      name: data
+      mountPath: /var/data
+    plan: free
+    routes:
+      - type: rewrite
+        source: /upload
+        destination: /
+        methods: [POST, OPTIONS]
+        headers:
+          Access-Control-Allow-Origin: "https://li-frontend.vercel.app"
+          Access-Control-Allow-Methods: "POST, OPTIONS"
+          Access-Control-Allow-Headers: "Content-Type, Authorization"
+          Access-Control-Allow-Credentials: "true"
+          Access-Control-Max-Age: "86400"
+      - type: rewrite
+        source: /(.*)
+        destination: /
+        methods: [GET, POST, PUT, DELETE, OPTIONS]
+        headers:
+          Access-Control-Allow-Origin: "https://li-frontend.vercel.app"
+          Access-Control-Allow-Methods: "GET, POST, PUT, DELETE, OPTIONS"
+          Access-Control-Allow-Headers: "Content-Type, Authorization"
+          Access-Control-Allow-Credentials: "true"
