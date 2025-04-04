@@ -8,10 +8,3 @@ services:
       - key: NODE_ENV
         value: production
     plan: free
-    routes:
-      - type: rewrite
-        source: /upload
-        destination: /
-      - type: rewrite
-        source: /(.*)
-        destination: /
